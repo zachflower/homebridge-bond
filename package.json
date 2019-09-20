@@ -1,7 +1,7 @@
 {
-  "name": "homebridge-bond",
+  "name": "homebridge-bond-home",
   "version": "0.2.1",
-  "description": "A homebridge plugin to control your IR/RF devices via BOND.",
+  "description": "A homebridge plugin to control your IR/RF devices via BOND Home.",
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
@@ -17,10 +17,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/edc1591/homebridge-bond.git"
+    "url": "git://github.com/zachflower/homebridge-bond.git"
   },
   "bugs": {
-    "url": "http://github.com/edc1591/homebridge-bond/issues"
+    "url": "http://github.com/zachflower/homebridge-bond/issues"
   },
   "engines": {
     "node": ">=0.12.0",
