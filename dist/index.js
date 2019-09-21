@@ -18,7 +18,7 @@ class BondPlatform {
             bonjour.find({
                 protocol: 'tcp'
             }, function(service) {
-                this.log(service);
+                that.log(service);
             });
 
             that.login(email, password)
