@@ -12,14 +12,15 @@ class BondPlatform {
         let email = config['email'];
         let password = config['password'];
         let that = this;
-        api.on('didFinishLaunching', () => {
-            that.log(that.accessories.length + " cached accessories were loaded");
 
+        api.on('didFinishLaunching', () => {
             bonjour.find({
                 protocol: 'tcp'
             }, function(service) {
                 that.log(service);
             });
+
+            that.log(that.accessories.length + " cached accessories were loaded");
 
             that.login(email, password)
                 .then(session => {
