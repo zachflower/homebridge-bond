@@ -1,12 +1,17 @@
 "use strict";
+
 Object.defineProperty(exports, "__esModule", { value: true });
+
 const request = require("request-promise");
 
 class Bond {
-    constructor(response) {
+    constructor(response, address) {
         this.sequence = 0;
         this.id = response.id;
+        this.address = address;
+
         let commandMap = new Map();
+
         for (let obj of response.commands) {
             if (commandMap.has(obj.device)) {
                 var cmds = commandMap.get(obj.device);
@@ -69,7 +74,7 @@ class Bond {
 
     sendCommand(session, command, device) {
         this.sequence++;
-        let url = "https://" + this.id + ":4433/api/v1/device/" + (parseInt(device.propertyId) - 1) + "/device_property/" + device.propertyId + "/device_property_command/" + command.propertyId + "/run";
+        let url = "https://" + this.address + ":4433/api/v1/device/" + (parseInt(device.propertyId) - 1) + "/device_property/" + device.propertyId + "/device_property_command/" + command.propertyId + "/run";
         return request({
             method: 'GET',
             uri: url,
