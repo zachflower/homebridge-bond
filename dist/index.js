@@ -9,42 +9,47 @@ class BondPlatform {
         this.log = log;
         this.api = api;
         this.accessories = [];
+        this.ips = {};
         let email = config['email'];
         let password = config['password'];
         let that = this;
 
         api.on('didFinishLaunching', () => {
-            bonjour.find({
-                type: 'bond'
-            }, function(service) {
-                that.log(service);
+            let discovery = new Promise(resolve => {
+                bonjour.find({
+                    type: 'bond'
+                }, function(service) {
+                    that.log(service);
+                });
             });
 
             that.log(that.accessories.length + " cached accessories were loaded");
 
-            that.login(email, password)
-                .then(session => {
-                    that.session = session;
-                    return that.readBonds();
-                })
-                .then(bonds => {
-                    that.bonds = bonds;
-                    if (bonds.length == 0) {
-                        that.log("No new bonds found.");
-                    } else {
-                        bonds.forEach(bond => {
-                            bond.devices.filter(device => {
-                                return !that.deviceAdded(device.id);
-                            })
-                            .forEach(device => {
-                                that.addAccessory(device);
-                            });
+            discovery.then(() => {
+                return that.login(email, password)
+            })
+            .then(session => {
+                that.session = session;
+                return that.readBonds();
+            })
+            .then(bonds => {
+                that.bonds = bonds;
+                if (bonds.length == 0) {
+                    that.log("No new bonds found.");
+                } else {
+                    bonds.forEach(bond => {
+                        bond.devices.filter(device => {
+                            return !that.deviceAdded(device.id);
+                        })
+                        .forEach(device => {
+                            that.addAccessory(device);
                         });
-                    }
-                })
-                .catch(error => {
-                    that.log(error);
-                });
+                    });
+                }
+            })
+            .catch(error => {
+                that.log(error);
+            });
         });
     }
 
@@ -228,19 +233,19 @@ class BondPlatform {
     }
 
     bondForIdentifier(id) {
-        let bonds = this.bonds
-            .filter(bond => {
+        let bonds = this.bonds.filter(bond => {
             return bond.id == id;
         });
+
         return bonds.length > 0 ? bonds[0] : null;
     }
 
     accessoryForIdentifier(id) {
-        let accessories = this.accessories
-            .filter(acc => {
+        let accessories = this.accessories.filter(acc => {
             let device = acc.context.device;
             return device.id == id;
         });
+
         return accessories.length > 0 ? accessories[0] : null;
     }
 
@@ -255,7 +260,7 @@ class BondPlatform {
             },
             json: true
         })
-            .then(body => {
+        .then(body => {
             return {
                 key: body.key,
                 token: body.user.bond_token
