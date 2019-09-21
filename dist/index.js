@@ -282,6 +282,8 @@ class BondPlatform {
     }
 
     readBond(service) {
+        let that = this;
+
         return request({
             method: 'GET',
             uri: 'https://appbond.com/api/v1/bonds/' + service.name,
@@ -290,6 +292,7 @@ class BondPlatform {
             }
         })
         .then(body => {
+            that.log(body);
             return new bond_1.Bond(JSON.parse(body), service.addresses[0]);
         });
     }

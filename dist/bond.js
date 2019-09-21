@@ -86,7 +86,6 @@ class Bond {
             }
         })
         .then(response => {
-            console.log(response);
             return;
         });
     }
