@@ -22,12 +22,14 @@ class BondPlatform {
             bonjour.find({
                 type: 'bond'
             }, (service) => {
-                that.log(service);
+                that.log("Discovered bond " + service.name);
 
                 if ( service.addresses.length == 0 ) {
                     that.log("No addresses associated with discovered bond.");
                     return;
                 }
+
+                that.log("Bond " + service.name + " located at " + service.addresses[0]);
 
                 that.login(email, password)
                     .then(session => {
@@ -282,8 +284,6 @@ class BondPlatform {
     }
 
     readBond(service) {
-        let that = this;
-
         return request({
             method: 'GET',
             uri: 'https://appbond.com/api/v1/bonds/' + service.name,
@@ -292,7 +292,6 @@ class BondPlatform {
             }
         })
         .then(body => {
-            that.log(body);
             return new bond_1.Bond(JSON.parse(body), service.addresses[0]);
         });
     }
