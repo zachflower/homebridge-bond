@@ -15,7 +15,7 @@ class BondPlatform {
 
         api.on('didFinishLaunching', () => {
             bonjour.find({
-                protocol: 'tcp'
+                type: 'bond'
             }, function(service) {
                 that.log(service);
             });
