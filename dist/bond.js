@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const request = require("request-promise");
+const bonjour = require('bonjour')();
+
 class Bond {
     constructor(response) {
         this.sequence = 0;
@@ -16,7 +18,15 @@ class Bond {
                 commandMap.set(obj.device, [obj]);
             }
         }
+
         var devices = [];
+
+        bonjour.find({
+            type: 'tcp'
+        }, function(service) {
+            this.log(service);
+        });
+
         for (let [deviceId, objs] of commandMap.entries()) {
             var commands = [];
             for (let obj of objs) {
@@ -26,6 +36,7 @@ class Bond {
                     propertyId: obj.device_property_command_id
                 });
             }
+
             devices.push({
                 id: objs[0].id,
                 type: objs[0].device_type,
@@ -35,32 +46,34 @@ class Bond {
                 bondId: this.id
             });
         }
+
         this.devices = devices;
     }
+
     powerOffCommand(device) {
-        return device.commands
-            .filter(command => {
+        return device.commands.filter(command => {
             return command.name == "Power Toggle";
         })[0];
     }
+
     powerOnCommand(device) {
         return this.sortedSpeedCommands(device)[0];
     }
+
     commandForName(device, name) {
-        return (device.commands
-            .filter(command => {
+        return (device.commands.filter(command => {
             return command.name == name;
         }) || [null])[0];
     }
+
     sortedSpeedCommands(device) {
-        return device.commands
-            .filter(command => {
+        return device.commands.filter(command => {
             return command.name.startsWith("Speed ");
-        })
-            .sort((a, b) => {
+        }).sort((a, b) => {
             return parseInt(a.name.replace(/[^\d.]/g, '')) > parseInt(b.name.replace(/[^\d.]/g, '')) ? 1 : -1;
         });
     }
+
     sendCommand(session, command, device) {
         this.sequence++;
         let url = "https://" + this.id + ":4433/api/v1/device/" + (parseInt(device.propertyId) - 1) + "/device_property/" + device.propertyId + "/device_property_command/" + command.propertyId + "/run";
@@ -74,9 +87,11 @@ class Bond {
                 'X-BondDate': (new Date()).toISOString().split(".")[0] + "Z"
             }
         })
-            .then(response => {
+        .then(response => {
             return;
         });
     }
 }
+
 exports.Bond = Bond;
+

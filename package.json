@@ -1,14 +1,9 @@
 {
   "name": "homebridge-bond-home",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A homebridge plugin to control your IR/RF devices via BOND Home.",
   "license": "MIT",
   "main": "dist/index.js",
-  "scripts": {
-    "prepublish": "npm run build",
-    "build": "tsc",
-    "clean": "rimraf dist"
-  },
   "keywords": [
     "homebridge-plugin",
     "bond",
@@ -33,6 +28,7 @@
   },
   "dependencies": {
     "bluebird": "^3.5.1",
+    "bonjour": "^3.5.0",
     "request": "^2.87.0",
     "request-promise": "^4.2.2"
   }
