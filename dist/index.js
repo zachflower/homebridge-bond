@@ -1,7 +1,9 @@
 "use strict";
 var Accessory, Service, Characteristic, UUIDGen;
 const request = require("request-promise");
+const bonjour = require('bonjour')();
 const bond_1 = require("./bond");
+
 class BondPlatform {
     constructor(log, config, api) {
         this.log = log;
@@ -12,32 +14,39 @@ class BondPlatform {
         let that = this;
         api.on('didFinishLaunching', () => {
             that.log(that.accessories.length + " cached accessories were loaded");
-            that
-                .login(email, password)
-                .then(session => {
-                that.session = session;
-                return that.readBonds();
-            })
-                .then(bonds => {
-                that.bonds = bonds;
-                if (bonds.length == 0) {
-                    that.log("No new bonds found.");
-                }
-                else {
-                    bonds.forEach(bond => {
-                        bond.devices
-                            .filter(device => { return !that.deviceAdded(device.id); })
-                            .forEach(device => {
-                            that.addAccessory(device);
-                        });
-                    });
-                }
-            })
-                .catch(error => {
-                that.log(error);
+
+            bonjour.find({
+                type: 'tcp'
+            }, function(service) {
+                this.log(service);
             });
+
+            that.login(email, password)
+                .then(session => {
+                    that.session = session;
+                    return that.readBonds();
+                })
+                .then(bonds => {
+                    that.bonds = bonds;
+                    if (bonds.length == 0) {
+                        that.log("No new bonds found.");
+                    } else {
+                        bonds.forEach(bond => {
+                            bond.devices.filter(device => {
+                                return !that.deviceAdded(device.id);
+                            })
+                            .forEach(device => {
+                                that.addAccessory(device);
+                            });
+                        });
+                    }
+                })
+                .catch(error => {
+                    that.log(error);
+                });
         });
     }
+
     addAccessory(device) {
         if (this.deviceAdded(device.id)) {
             this.log(device.id + " has already been added.");
@@ -63,6 +72,7 @@ class BondPlatform {
         this.api.registerPlatformAccessories('homebridge-bond', 'Bond', [accessory]);
         this.accessories.push(accessory);
     }
+
     removeAccessory(accessory) {
         this.log("Removing accessory " + accessory.displayName);
         let index = this.accessories.indexOf(accessory);
@@ -71,6 +81,7 @@ class BondPlatform {
         }
         this.api.unregisterPlatformAccessories('homebridge-bond', 'Bond', [accessory]);
     }
+
     upgrade(accessory) {
         let device = accessory.context.device;
         if (accessory.getService("Reset " + device.room + " " + device.type) == undefined) {
@@ -83,6 +94,7 @@ class BondPlatform {
             accessory.removeService(reverse);
         }
     }
+
     configureAccessory(accessory) {
         this.accessories.push(accessory);
         if (this.bonds) {
@@ -102,6 +114,7 @@ class BondPlatform {
             }, 500);
         }
     }
+
     setupObservers(accessory) {
         let that = this;
         let device = accessory.context.device;
@@ -194,6 +207,7 @@ class BondPlatform {
             });
         }
     }
+
     getSpeedCommand(bond, device, speed) {
         let commands = bond.sortedSpeedCommands(device);
         switch (speed) {
@@ -207,9 +221,11 @@ class BondPlatform {
                 return bond.powerOffCommand(device);
         }
     }
+
     deviceAdded(id) {
         return this.accessoryForIdentifier(id) != null;
     }
+
     bondForIdentifier(id) {
         let bonds = this.bonds
             .filter(bond => {
@@ -217,6 +233,7 @@ class BondPlatform {
         });
         return bonds.length > 0 ? bonds[0] : null;
     }
+
     accessoryForIdentifier(id) {
         let accessories = this.accessories
             .filter(acc => {
@@ -225,6 +242,7 @@ class BondPlatform {
         });
         return accessories.length > 0 ? accessories[0] : null;
     }
+
     login(email, password) {
         let that = this;
         return request({
@@ -243,6 +261,7 @@ class BondPlatform {
             };
         });
     }
+
     readBonds() {
         return request({
             method: 'GET',
@@ -251,11 +270,14 @@ class BondPlatform {
                 Authorization: "Token " + this.session.key
             }
         })
-            .then(body => {
-            return JSON.parse(body)['results'].map(a => { return new bond_1.Bond(a); });
+        .then(body => {
+            return JSON.parse(body)['results'].map(a => {
+                return new bond_1.Bond(a);
+            });
         });
     }
 }
+
 module.exports = function (homebridge) {
     Service = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;

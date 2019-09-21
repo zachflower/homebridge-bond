@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const request = require("request-promise");
-const bonjour = require('bonjour')();
 
 class Bond {
     constructor(response) {
@@ -20,12 +19,6 @@ class Bond {
         }
 
         var devices = [];
-
-        bonjour.find({
-            type: 'tcp'
-        }, function(service) {
-            this.log(service);
-        });
 
         for (let [deviceId, objs] of commandMap.entries()) {
             var commands = [];
