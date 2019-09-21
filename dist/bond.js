@@ -73,8 +73,6 @@ class Bond {
     }
 
     sendCommand(session, command, device) {
-        let that = this;
-
         this.sequence++;
         let url = "https://" + this.address + ":4433/api/v1/device/" + (parseInt(device.propertyId) - 1) + "/device_property/" + device.propertyId + "/device_property_command/" + command.propertyId + "/run";
         return request({
@@ -88,7 +86,7 @@ class Bond {
             }
         })
         .then(response => {
-            that.log(response);
+            console.log(response);
             return;
         });
     }
