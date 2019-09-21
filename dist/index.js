@@ -111,14 +111,14 @@ class BondPlatform {
     configureAccessory(accessory) {
         this.accessories.push(accessory);
 
-        if (this.bonds) {
+        if (this.bonds.length > 0) {
             this.log("Configure Accessory: " + accessory.displayName);
             this.upgrade(accessory);
             this.setupObservers(accessory);
         } else {
             let that = this;
             let timer = setInterval(() => {
-                if (this.bonds) {
+                if (this.bonds.length > 0) {
                     that.log("Configure Accessory: " + accessory.displayName);
                     this.upgrade(accessory);
                     that.setupObservers(accessory);
@@ -284,8 +284,6 @@ class BondPlatform {
     }
 
     readBond(service) {
-        let that = this;
-
         return request({
             method: 'GET',
             uri: 'https://appbond.com/api/v1/bonds/' + service.name,
@@ -294,7 +292,6 @@ class BondPlatform {
             }
         })
         .then(body => {
-            that.log(body);
             return new bond_1.Bond(JSON.parse(body), service.addresses[0]);
         });
     }

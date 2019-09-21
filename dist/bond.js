@@ -15,10 +15,10 @@ class Bond {
         for (let obj of response.commands) {
             if (commandMap.has(obj.device)) {
                 var cmds = commandMap.get(obj.device);
+
                 cmds.push(obj);
                 commandMap.set(obj.device, cmds);
-            }
-            else {
+            } else {
                 commandMap.set(obj.device, [obj]);
             }
         }
@@ -27,6 +27,7 @@ class Bond {
 
         for (let [deviceId, objs] of commandMap.entries()) {
             var commands = [];
+
             for (let obj of objs) {
                 commands.push({
                     id: obj.id,
