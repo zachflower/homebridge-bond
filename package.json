@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "description": "A homebridge plugin to control your IR/RF devices via BOND Home.",
   "license": "MIT",
-  "main": "dist/index.js",
+  "main": "src/index.js",
   "keywords": [
     "homebridge-plugin",
     "bond",

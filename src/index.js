@@ -9,47 +9,54 @@ const bond_1 = require("./bond");
 class BondPlatform {
     constructor(log, config, api) {
         this.log = log;
+        this.config = config;
         this.api = api;
+
         this.accessories = [];
         this.bonds = [];
-        let email = config['email'];
-        let password = config['password'];
+
         let that = this;
 
         api.on('didFinishLaunching', () => {
             that.log(that.accessories.length + " cached accessories were loaded");
 
-            bonjour.find({
-                type: 'bond'
-            }, (service) => {
-                that.log("Discovered bond " + service.name);
+            that.discover();
+        });
+    }
 
-                if ( service.addresses.length == 0 ) {
-                    that.log("No addresses associated with discovered bond.");
-                    return;
-                }
+    discover() {
+        let that = this;
 
-                that.log("Bond " + service.name + " located at " + service.addresses[0]);
+        bonjour.find({
+            type: 'bond'
+        }, (service) => {
+            that.log("Discovered bond " + service.name);
 
-                that.login(email, password)
-                    .then(session => {
-                        that.session = session;
-                        return that.readBond(service);
+            if ( service.addresses.length == 0 ) {
+                that.log("No addresses associated with discovered bond. Skipping.");
+                return;
+            }
+
+            that.log("Discovered bond " + service.name + " at " + service.addresses[0] + '.');
+
+            that.login(this.config['email'], this.config['password'])
+                .then(session => {
+                    that.session = session;
+                    return that.readBond(service);
+                })
+                .then(bond => {
+                    that.bonds.push(bond);
+
+                    bond.devices.filter(device => {
+                        return !that.deviceAdded(device.id);
                     })
-                    .then(bond => {
-                        that.bonds.push(bond);
-
-                        bond.devices.filter(device => {
-                            return !that.deviceAdded(device.id);
-                        })
-                        .forEach(device => {
-                            that.addAccessory(device);
-                        });
-                    })
-                    .catch(error => {
-                        that.log(error);
+                    .forEach(device => {
+                        that.addAccessory(device);
                     });
-            });
+                })
+                .catch(error => {
+                    that.log(error);
+                });
         });
     }
 
@@ -77,7 +84,7 @@ class BondPlatform {
 
         accessory.getService(Service.AccessoryInformation).setCharacteristic(Characteristic.SerialNumber, device.id);
 
-        this.api.registerPlatformAccessories('homebridge-bond', 'Bond', [accessory]);
+        this.api.registerPlatformAccessories('homebridge-bond-home', 'Bond', [accessory]);
         this.accessories.push(accessory);
     }
 
@@ -89,7 +96,7 @@ class BondPlatform {
             this.accessories.splice(index, 1);
         }
 
-        this.api.unregisterPlatformAccessories('homebridge-bond', 'Bond', [accessory]);
+        this.api.unregisterPlatformAccessories('homebridge-bond-home', 'Bond', [accessory]);
     }
 
     upgrade(accessory) {
@@ -140,6 +147,7 @@ class BondPlatform {
             theFan.getCharacteristic(Characteristic.RotationDirection)
                 .on('set', function (value, callback) {
                     let command = bond.commandForName(device, "Reverse");
+
                     bond.sendCommand(that.session, command, device)
                         .then(() => {
                             theFan.getCharacteristic(Characteristic.RotationDirection).updateValue(value);
@@ -154,7 +162,8 @@ class BondPlatform {
             bulb.getCharacteristic(Characteristic.On)
                 .on('set', function (value, callback) {
                     let command = bond.commandForName(device, "Light Toggle");
-                    // Called to avoid toggling when the light is already in the requested state. (Workaround for Siri)
+
+                    // called to avoid toggling when the light is already in the requested state
                     if (value == bulb.getCharacteristic(Characteristic.On).value) {
                         callback();
                         return;
@@ -173,7 +182,7 @@ class BondPlatform {
 
             theFan.getCharacteristic(Characteristic.On)
                 .on('set', function (value, callback) {
-                    //this gets called right after a rotation set so ignore if state isnt changing
+                    // this gets called right after a rotation set so ignore if state isn't changing
                     if (value == theFan.getCharacteristic(Characteristic.On).value) {
                         callback();
                         return;
@@ -198,7 +207,6 @@ class BondPlatform {
                     maxValue: 99
                 })
                 .on('set', function (value, callback) {
-                    let stop = false;
                     var command = that.getSpeedCommand(bond, device, value);
                     let old = theFan.getCharacteristic(Characteristic.RotationSpeed).value;
                     theFan.getCharacteristic(Characteristic.RotationSpeed).updateValue(value);
@@ -207,8 +215,8 @@ class BondPlatform {
                             callback();
                         })
                         .catch(error => {
-                            //because the on command comes in so quickly, we optimistically set our new value.
-                            //if we fail roll it back
+                            // because the on command comes in so quickly, we optimistically set our new value.
+                            // if we fail roll it back
                             setTimeout(() => theFan.getCharacteristic(Characteristic.RotationSpeed).updateValue(old), 250);
                             that.log(error);
                             callback();
@@ -220,7 +228,9 @@ class BondPlatform {
                     theFan.getCharacteristic(Characteristic.On).updateValue(false);
                     theFan.getCharacteristic(Characteristic.RotationDirection).updateValue(false);
                     bulb.getCharacteristic(Characteristic.On).updateValue(false);
+
                     setTimeout(() => reset.getCharacteristic(Characteristic.On).updateValue(false), 250);
+
                     callback();
                 })
                 .on('get', function (callback) {
@@ -231,6 +241,7 @@ class BondPlatform {
 
     getSpeedCommand(bond, device, speed) {
         let commands = bond.sortedSpeedCommands(device);
+
         switch (speed) {
             case 33:
                 return commands[0];
@@ -265,7 +276,6 @@ class BondPlatform {
     }
 
     login(email, password) {
-        let that = this;
         return request({
             method: 'POST',
             uri: 'https://appbond.com/api/v1/auth/login/',
@@ -302,5 +312,6 @@ module.exports = function (homebridge) {
     Characteristic = homebridge.hap.Characteristic;
     Accessory = homebridge.platformAccessory;
     UUIDGen = homebridge.hap.uuid;
-    homebridge.registerPlatform('homebridge-bond', 'Bond', BondPlatform, true);
+
+    homebridge.registerPlatform('homebridge-bond-home', 'Bond', BondPlatform, true);
 };
