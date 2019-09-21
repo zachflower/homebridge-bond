@@ -162,13 +162,13 @@ class BondPlatform {
 
                     bond.sendCommand(that.session, command, device)
                         .then(() => {
-                        bulb.getCharacteristic(Characteristic.On).updateValue(value);
-                        callback();
-                    })
+                            bulb.getCharacteristic(Characteristic.On).updateValue(value);
+                            callback();
+                        })
                         .catch(error => {
-                        that.log(error);
-                        callback();
-                    });
+                            that.log(error);
+                            callback();
+                        });
                 });
 
             theFan.getCharacteristic(Characteristic.On)
