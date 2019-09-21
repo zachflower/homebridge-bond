@@ -16,7 +16,6 @@ class BondPlatform {
             that.log(that.accessories.length + " cached accessories were loaded");
 
             bonjour.find({
-                type: 'bond',
                 protocol: 'tcp'
             }, function(service) {
                 this.log(service);
