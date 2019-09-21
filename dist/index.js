@@ -140,13 +140,13 @@ class BondPlatform {
                     let command = bond.commandForName(device, "Reverse");
                     bond.sendCommand(that.session, command, device)
                         .then(() => {
-                        theFan.getCharacteristic(Characteristic.RotationDirection).updateValue(value);
-                        callback();
-                    })
+                            theFan.getCharacteristic(Characteristic.RotationDirection).updateValue(value);
+                            callback();
+                        })
                         .catch(error => {
-                        that.log(error);
-                        callback();
-                    });
+                            that.log(error);
+                            callback();
+                        });
                 });
 
             bulb.getCharacteristic(Characteristic.On)
